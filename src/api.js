@@ -1,13 +1,5 @@
 const getBaseUrl = () => {
-    const hostname = window.location.hostname;
-
-    // If accessing from localhost, use localhost:5000
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        return 'http://localhost:5000/api';
-    }
-
-    // If accessing from phone/other machine, use the same IP with port 5000
-    return `http://${hostname}:5000/api`;
+  return "https://todo-backend-vat7.onrender.com";
 };
 
 export const BASE_URL = getBaseUrl();

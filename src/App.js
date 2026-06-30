@@ -27,9 +27,9 @@ useEffect(() => {
         if (token) {
             try {
                 const hostname = window.location.hostname;
-                const baseUrl = (hostname === 'localhost' || hostname === '127.0.0.1')
-                    ? 'http://localhost:5000/api'
-                    : `http://${hostname}:5000/api`;
+                const getBaseUrl = () => {
+                    return "https://todo-backend-vat7.onrender.com";
+                    };
                 
                 const res = await axios.get(`${baseUrl}/users/me`, {
                     headers: { Authorization: `Bearer ${token}` },
