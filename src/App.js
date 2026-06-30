@@ -24,24 +24,26 @@ function App() {
 
 useEffect(() => {
     const checkUser = async () => {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem("token");
+
         if (token) {
             try {
-                const hostname = window.location.hostname;
-                const getBaseUrl = () => {
-                    return "https://todo-backend-vat7.onrender.com";
-                    };
-                
                 const res = await axios.get(`${BASE_URL}/users/me`, {
-                    headers: { Authorization: `Bearer ${token}` },
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
                 });
+
                 setUser(res.data);
             } catch (err) {
-                localStorage.removeItem('token');
+                console.error(err);
+                localStorage.removeItem("token");
             }
         }
+
         setLoading(false);
     };
+
     checkUser();
 }, []);
 
