@@ -11,6 +11,7 @@ import Chat from './pages/Chat';
 import Navbar from './components/Navbar';
 import ChatBot from './components/ChatBot';
 import { fetchTodos, fetchTrash, createTodo, deleteTodo, restoreTodo } from './api';
+import { BASE_URL } from "./api";
 
 function App() {
     const [user, setUser] = useState(null);
@@ -31,7 +32,7 @@ useEffect(() => {
                     return "https://todo-backend-vat7.onrender.com";
                     };
                 
-                const res = await axios.get(`${baseUrl}/users/me`, {
+                const res = await axios.get(`${BASE_URL}/users/me`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 setUser(res.data);
