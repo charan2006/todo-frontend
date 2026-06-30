@@ -1,8 +1,9 @@
 const getBaseUrl = () => {
-  return "https://todo-backend-vat7.onrender.com";
+  return "https://todo-backend-vat7.onrender.com/api";
 };
 
 export const BASE_URL = getBaseUrl();
+
 
 const getHeaders = () => ({
     'Content-Type': 'application/json',
