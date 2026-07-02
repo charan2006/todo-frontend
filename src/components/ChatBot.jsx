@@ -32,8 +32,9 @@ const ChatBot = ({ onTodosChanged, floating = true }) => {
             const res = await sendChatMessage(text, history.slice(0, -1));
             setMessages((prev) => [...prev, { role: 'assistant', content: res.reply || 'Done!' }]);
 
-            if (res.actionsTaken?.length > 0 && onTodosChanged) {
-                onTodosChanged();
+            // ✅ Test 4 fix — refresh after every response
+            if (onTodosChanged) {
+                await onTodosChanged();
             }
         } catch (err) {
             console.error(err);
