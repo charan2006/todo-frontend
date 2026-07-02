@@ -17,6 +17,20 @@ function TodoForm({ saveTodoList }) {
     const [suggestion, setSuggestion] = useState(null);
     const [showSuggestion, setShowSuggestion] = useState(false);
     const [loadingSuggestion, setLoadingSuggestion] = useState(false);
+    const [saving, setSaving] = useState(false);
+
+    // Track whether the user has manually touched these fields.
+    // If they haven't, we know it's safe to auto-apply an AI suggestion.
+    const [priorityTouched, setPriorityTouched] = useState(false);
+    const [dueDateTouched, setDueDateTouched] = useState(false);
+
+    const fetchAiData = async () => {
+        const [cat, sug] = await Promise.all([
+            categorizeTask(task, description),
+            suggestTaskDetails(task, description),
+        ]);
+        return { cat, sug };
+    };
 
     const handleGetSuggestions = async () => {
         if (!task.trim()) {
@@ -27,10 +41,7 @@ function TodoForm({ saveTodoList }) {
         setSuggestion(null);
         setShowSuggestion(false);
         try {
-            const [cat, sug] = await Promise.all([
-                categorizeTask(task, description),
-                suggestTaskDetails(task, description),
-            ]);
+            const { cat, sug } = await fetchAiData();
             setCategory(cat.category || 'personal');
             setSuggestion(sug);
             setShowSuggestion(true);
@@ -45,33 +56,69 @@ function TodoForm({ saveTodoList }) {
     const handleAcceptSuggestion = () => {
         if (suggestion) {
             setPriority(suggestion.priority || 'Medium');
-            if (suggestion.dueDate) setDueDate(suggestion.dueDate);
+            setPriorityTouched(true);
+            if (suggestion.dueDate) {
+                setDueDate(suggestion.dueDate);
+                setDueDateTouched(true);
+            }
         }
         setShowSuggestion(false);
     };
 
-    const handleSubmit = (event) => {
+    const handleSubmit = async (event) => {
         event.preventDefault();
-        if (!task.trim()) return;
+        if (!task.trim() || saving) return;
 
-        saveTodoList({
-            task: task.trim(),
-            dueDate,
-            startDate,
-            subtasks: [],
-            priority,
-            description: description.trim(),
-            category: category || 'personal',
-        });
+        setSaving(true);
+        try {
+            // Always resolve a category and an AI suggestion before saving,
+            // if we haven't already fetched one via the "Get AI Suggestions" button.
+            let finalCategory = category;
+            let finalPriority = priority;
+            let finalDueDate = dueDate;
 
-        setTask('');
-        setStartDate('');
-        setDueDate('');
-        setPriority('Medium');
-        setDescription('');
-        setCategory('');
-        setSuggestion(null);
-        setShowSuggestion(false);
+            if (!finalCategory || !suggestion) {
+                try {
+                    const { cat, sug } = await fetchAiData();
+                    finalCategory = finalCategory || cat.category || 'personal';
+
+                    // Only auto-apply priority/deadline if the user never touched them —
+                    // otherwise we respect what they explicitly chose.
+                    if (!priorityTouched && sug?.priority) {
+                        finalPriority = sug.priority;
+                    }
+                    if (!dueDateTouched && sug?.dueDate) {
+                        finalDueDate = sug.dueDate;
+                    }
+                } catch (aiErr) {
+                    console.error('AI auto-categorization failed, falling back:', aiErr);
+                    finalCategory = finalCategory || 'personal';
+                }
+            }
+
+            saveTodoList({
+                task: task.trim(),
+                dueDate: finalDueDate,
+                startDate,
+                subtasks: [],
+                priority: finalPriority,
+                description: description.trim(),
+                category: finalCategory,
+            });
+
+            setTask('');
+            setStartDate('');
+            setDueDate('');
+            setPriority('Medium');
+            setDescription('');
+            setCategory('');
+            setSuggestion(null);
+            setShowSuggestion(false);
+            setPriorityTouched(false);
+            setDueDateTouched(false);
+        } finally {
+            setSaving(false);
+        }
     };
 
     return (
@@ -92,18 +139,26 @@ function TodoForm({ saveTodoList }) {
                     <input
                         type="date"
                         value={dueDate}
-                        onChange={(e) => setDueDate(e.target.value)}
+                        onChange={(e) => {
+                            setDueDate(e.target.value);
+                            setDueDateTouched(true);
+                        }}
                     />
                     <select
                         value={priority}
-                        onChange={(e) => setPriority(e.target.value)}
+                        onChange={(e) => {
+                            setPriority(e.target.value);
+                            setPriorityTouched(true);
+                        }}
                         className="priority"
                     >
                         <option value="High">High</option>
                         <option value="Medium">Medium</option>
                         <option value="Low">Low</option>
                     </select>
-                    <button type="submit">Save</button>
+                    <button type="submit" disabled={saving}>
+                        {saving ? 'Saving...' : 'Save'}
+                    </button>
                 </div>
 
                 <textarea
@@ -121,7 +176,7 @@ function TodoForm({ saveTodoList }) {
                         onClick={handleGetSuggestions}
                         disabled={loadingSuggestion || !task.trim()}
                     >
-                        {loadingSuggestion ? '✨ Thinking...' : '✨ Get AI Suggestions'}
+                        {loadingSuggestion ? '✨ Thinking...' : '✨ Preview AI Suggestions'}
                     </button>
 
                     {category && (
@@ -133,6 +188,9 @@ function TodoForm({ saveTodoList }) {
                         </span>
                     )}
                 </div>
+                <p className="ai-hint" style={{ fontSize: '0.8rem', opacity: 0.7, marginTop: '4px' }}>
+                    Category is auto-assigned on save. Priority/deadline are auto-suggested if you leave them unset — use the button above to preview and override before saving.
+                </p>
             </form>
 
             {showSuggestion && suggestion && (
