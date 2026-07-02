@@ -1,4 +1,4 @@
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+export const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const getHeaders = () => ({
     'Content-Type': 'application/json',
@@ -14,14 +14,6 @@ export const fetchTodos = async () => {
 export const fetchTrash = async () => {
     const res = await fetch(`${BASE_URL}/todos/trash`, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch trash');
-    return res.json();
-};
-export const clearTrash = async () => {
-    const res = await fetch(`${BASE_URL}/todos/trash/clear`, {
-        method: 'DELETE',
-        headers: getHeaders(),
-    });
-    if (!res.ok) throw new Error('Failed to clear trash');
     return res.json();
 };
 
@@ -60,6 +52,15 @@ export const restoreTodo = async (id) => {
         headers: getHeaders(),
     });
     if (!res.ok) throw new Error('Failed to restore todo');
+    return res.json();
+};
+
+export const clearTrash = async () => {
+    const res = await fetch(`${BASE_URL}/todos/trash/clear`, {
+        method: 'DELETE',
+        headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to clear trash');
     return res.json();
 };
 
