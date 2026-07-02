@@ -69,7 +69,7 @@ const Home = ({ user, todolist }) => {
             <div className="home-hero">
                 <div className="home-hero-inner">
                     <div className="home-hero-content">
-                        <span className="home-logo">✅</span>
+                        <span className="home-logo"></span>
                         <h1 className="home-title">TaskMaster</h1>
                         <p className="home-subtitle">
                             Stay organized, stay productive. Manage your tasks
