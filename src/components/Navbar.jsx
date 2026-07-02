@@ -12,7 +12,7 @@ const Navbar = ({ user, logout }) => {
             <div className="navbar-container">
 
                 <Link to="/" className="navbar-logo">
-                    ✅ TaskMaster
+                    TaskMaster
                 </Link>
 
                 <div className="navbar-links">
