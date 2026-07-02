@@ -1127,3 +1127,16 @@ body {
 }
 
 .summary-refresh-btn:hover { background: #e5e7eb; }
+.clear-trash-btn {
+    margin-left: 8px;
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+}
+.clear-trash-btn:hover {
+    background: #dc2626;
+}

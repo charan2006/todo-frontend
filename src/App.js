@@ -10,7 +10,7 @@ import Home from './pages/Home';
 import Chat from './pages/Chat';
 import Navbar from './components/Navbar';
 import ChatBot from './components/ChatBot';
-import { fetchTodos, fetchTrash, createTodo, deleteTodo, restoreTodo } from './api';
+import { fetchTodos, fetchTrash, createTodo, deleteTodo, restoreTodo, clearTrash } from './api';
 import { BASE_URL } from "./api";
 import DailySummary from './components/DailySummary';
 
@@ -117,6 +117,20 @@ useEffect(() => {
         }
     };
 
+    const clearAllDeleted = async () => {
+        if (deletedTasks.length === 0) return;
+        const confirmed = window.confirm(
+            `Permanently delete all ${deletedTasks.length} trashed task(s)? This cannot be undone.`
+        );
+        if (!confirmed) return;
+        try {
+            await clearTrash();
+            setDeletedTasks([]);
+        } catch (err) {
+            console.error('Failed to clear trash:', err);
+        }
+    };
+
     const updateTaskInState = (updatedTodo) => {
         settodolist((prev) =>
             prev.map((item) => (item._id === updatedTodo._id ? updatedTodo : item))
@@ -172,6 +186,9 @@ useEffect(() => {
                                     <button className="restore-btn" onClick={restoreTask}>
                                         ↩ Restore Last Deleted &nbsp;
                                         <span className="restore-count">{deletedTasks.length}</span>
+                                    </button>
+                                    <button className="clear-trash-btn" onClick={clearAllDeleted}>
+                                        🗑️ Clear All
                                     </button>
                                 </div>
                             )}

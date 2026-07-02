@@ -16,6 +16,14 @@ export const fetchTrash = async () => {
     if (!res.ok) throw new Error('Failed to fetch trash');
     return res.json();
 };
+export const clearTrash = async () => {
+    const res = await fetch(`${BASE_URL}/todos/trash/clear`, {
+        method: 'DELETE',
+        headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to clear trash');
+    return res.json();
+};
 
 export const createTodo = async (todo) => {
     const res = await fetch(`${BASE_URL}/todos`, {
