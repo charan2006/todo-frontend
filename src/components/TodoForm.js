@@ -1,47 +1,195 @@
+import { useState } from 'react';
+import { categorizeTask, suggestTaskDetails } from '../api';
+
+const categoryColors = {
+    work: '#3b82f6',
+    personal: '#10b981',
+    urgent: '#ef4444',
+};
+
 function TodoForm({ saveTodoList }) {
-  const handleSubmit = (event) => {
-    event.preventDefault();
+    const [task, setTask] = useState('');
+    const [startDate, setStartDate] = useState('');
+    const [dueDate, setDueDate] = useState('');
+    const [priority, setPriority] = useState('Medium');
+    const [description, setDescription] = useState('');
+    const [category, setCategory] = useState('');
+    const [suggestion, setSuggestion] = useState(null);
+    const [showSuggestion, setShowSuggestion] = useState(false);
+    const [loadingSuggestion, setLoadingSuggestion] = useState(false);
 
-    const task = event.target.toname.value;
-    const dueDate = event.target.dueDate.value;
-    const startDate = event.target.startDate.value;
-    const priority = event.target.priority.value;
-    const description = event.target.description.value.trim();
+    const handleGetSuggestions = async () => {
+        if (!task.trim()) {
+            alert('Please enter a task title first');
+            return;
+        }
+        setLoadingSuggestion(true);
+        setSuggestion(null);
+        setShowSuggestion(false);
+        try {
+            const [cat, sug] = await Promise.all([
+                categorizeTask(task, description),
+                suggestTaskDetails(task, description),
+            ]);
+            setCategory(cat.category || 'personal');
+            setSuggestion(sug);
+            setShowSuggestion(true);
+        } catch (err) {
+            console.error('AI suggestion failed:', err);
+            alert('Could not get AI suggestions. Try again.');
+        } finally {
+            setLoadingSuggestion(false);
+        }
+    };
 
-    saveTodoList({
-      task,
-      dueDate,
-      startDate,
-      subtasks: [],
-      priority,
-      description,
-    });
+    const handleAcceptSuggestion = () => {
+        if (suggestion) {
+            setPriority(suggestion.priority || 'Medium');
+            if (suggestion.dueDate) setDueDate(suggestion.dueDate);
+        }
+        setShowSuggestion(false);
+    };
 
-    event.target.reset();
-  };
+    const handleSubmit = (event) => {
+        event.preventDefault();
+        if (!task.trim()) return;
 
-  return (
-    <form onSubmit={handleSubmit}>
-      <div className="form-row">
-        <input type="text" name="toname" placeholder="Enter the task" />
-        <input type="date" name="startDate" />
-        <input type="date" name="dueDate" />
-        <select name="priority" className="priority" defaultValue="Medium">
-          <option value="High">High</option>
-          <option value="Medium">Medium</option>
-          <option value="Low">Low</option>
-        </select>
-        <button>Save</button>
-      </div>
+        saveTodoList({
+            task: task.trim(),
+            dueDate,
+            startDate,
+            subtasks: [],
+            priority,
+            description: description.trim(),
+            category: category || 'personal',
+        });
 
-      <textarea
-        name="description"
-        className="description-input"
-        placeholder="Add a task description (optional)..."
-        rows={2}
-      />
-    </form>
-  );
+        setTask('');
+        setStartDate('');
+        setDueDate('');
+        setPriority('Medium');
+        setDescription('');
+        setCategory('');
+        setSuggestion(null);
+        setShowSuggestion(false);
+    };
+
+    return (
+        <div className="todo-form-wrapper">
+            <form onSubmit={handleSubmit}>
+                <div className="form-row">
+                    <input
+                        type="text"
+                        value={task}
+                        onChange={(e) => setTask(e.target.value)}
+                        placeholder="Enter the task"
+                    />
+                    <input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                    />
+                    <input
+                        type="date"
+                        value={dueDate}
+                        onChange={(e) => setDueDate(e.target.value)}
+                    />
+                    <select
+                        value={priority}
+                        onChange={(e) => setPriority(e.target.value)}
+                        className="priority"
+                    >
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
+                    </select>
+                    <button type="submit">Save</button>
+                </div>
+
+                <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="description-input"
+                    placeholder="Add a task description (optional)..."
+                    rows={2}
+                />
+
+                <div className="ai-row">
+                    <button
+                        type="button"
+                        className="ai-suggest-btn"
+                        onClick={handleGetSuggestions}
+                        disabled={loadingSuggestion || !task.trim()}
+                    >
+                        {loadingSuggestion ? '✨ Thinking...' : '✨ Get AI Suggestions'}
+                    </button>
+
+                    {category && (
+                        <span
+                            className="category-badge"
+                            style={{ background: categoryColors[category] }}
+                        >
+                            {category}
+                        </span>
+                    )}
+                </div>
+            </form>
+
+            {showSuggestion && suggestion && (
+                <div className="suggestion-panel">
+                    <div className="suggestion-header">
+                        <span>✨ AI Suggestions</span>
+                        <button
+                            className="suggestion-close"
+                            onClick={() => setShowSuggestion(false)}
+                        >✕</button>
+                    </div>
+                    <div className="suggestion-body">
+                        <div className="suggestion-item">
+                            <span className="suggestion-label">Category</span>
+                            <span
+                                className="category-badge"
+                                style={{ background: categoryColors[category] }}
+                            >
+                                {category}
+                            </span>
+                        </div>
+                        <div className="suggestion-item">
+                            <span className="suggestion-label">Suggested Priority</span>
+                            <span className={`sug-priority sug-priority-${suggestion.priority?.toLowerCase()}`}>
+                                {suggestion.priority}
+                            </span>
+                        </div>
+                        {suggestion.dueDate && (
+                            <div className="suggestion-item">
+                                <span className="suggestion-label">Suggested Deadline</span>
+                                <span className="suggestion-value">{suggestion.dueDate}</span>
+                            </div>
+                        )}
+                        {suggestion.reasoning && (
+                            <div className="suggestion-reasoning">
+                                💡 {suggestion.reasoning}
+                            </div>
+                        )}
+                        <div className="suggestion-actions">
+                            <button
+                                className="suggestion-accept-btn"
+                                onClick={handleAcceptSuggestion}
+                            >
+                                ✅ Accept
+                            </button>
+                            <button
+                                className="suggestion-ignore-btn"
+                                onClick={() => setShowSuggestion(false)}
+                            >
+                                Ignore
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
 }
 
 export default TodoForm;

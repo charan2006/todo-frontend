@@ -12,6 +12,7 @@ import Navbar from './components/Navbar';
 import ChatBot from './components/ChatBot';
 import { fetchTodos, fetchTrash, createTodo, deleteTodo, restoreTodo } from './api';
 import { BASE_URL } from "./api";
+import DailySummary from './components/DailySummary';
 
 function App() {
     const [user, setUser] = useState(null);
@@ -163,6 +164,8 @@ useEffect(() => {
                     element={!user ? <Navigate to="/login" /> : (
                         <div className="todo">
                             <TodoForm saveTodoList={saveTodoList} />
+
+                            <DailySummary />
 
                             {deletedTasks.length > 0 && (
                                 <div className="restore-wrapper">

@@ -1,10 +1,4 @@
-
-const getBaseUrl = () => {
-  return "https://todo-backend-vat7.onrender.com/api";
-};
-
-export const BASE_URL = getBaseUrl();
-
+const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const getHeaders = () => ({
     'Content-Type': 'application/json',
@@ -68,5 +62,31 @@ export const sendChatMessage = async (message, history) => {
         body: JSON.stringify({ message, history }),
     });
     if (!res.ok) throw new Error('Chat request failed');
+    return res.json();
+};
+
+export const categorizeTask = async (task, description) => {
+    const res = await fetch(`${BASE_URL}/ai/categorize`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ task, description }),
+    });
+    if (!res.ok) throw new Error('Failed to categorize');
+    return res.json();
+};
+
+export const suggestTaskDetails = async (task, description) => {
+    const res = await fetch(`${BASE_URL}/ai/suggest`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ task, description }),
+    });
+    if (!res.ok) throw new Error('Failed to get suggestions');
+    return res.json();
+};
+
+export const getDailySummary = async () => {
+    const res = await fetch(`${BASE_URL}/ai/summary`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to get summary');
     return res.json();
 };
